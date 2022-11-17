@@ -1,0 +1,12 @@
+target
+.gitignore
+test-output
+.classpath
+.project
+.settings
+*.swp
+.idea
+*.iml
+*.log*
+.sonar-ide.properties
+*.versionsBackup
