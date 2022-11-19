@@ -2,7 +2,6 @@ package com.qatarairways.adapter.flight.dto.request;
 
 import java.util.Date;
 
-import com.qatarairways.adapter.flight.dto.FlightDetails;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -31,5 +30,4 @@ public class FlightAvailabilityRequest {
      */
     int numberOfTravellers;
 
-    FlightDetails flightDetails;
 }

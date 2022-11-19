@@ -21,7 +21,7 @@ public class FlightSearchRequest {
     @NonNull
     private String destination;
     @NonNull
-    private String departureDate;
+    private String departureDateTime;
     @Builder.Default
     private int numberOfTravellers = 1;
     @Builder.Default
@@ -33,7 +33,7 @@ public class FlightSearchRequest {
     @Builder.Default
     private int size = 3;
     @Builder.Default
-    private FlightSort sort = FlightSort.DURATION;
+    private FlightSort flightSort = FlightSort.DURATION;
     @Builder.Default
     private String order = "ASC";
 }
