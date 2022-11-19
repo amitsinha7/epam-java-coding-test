@@ -59,5 +59,5 @@ your own but please highlight your decision.
 ## Bonus Exercise
 
 The current implementation
-of `com.qatarairways.adapter.flight.FlightAvailabilityRequest` is not ideal.
+of `com.qatarairways.adapter.flight.dto.request.FlightAvailabilityRequest` is not ideal.
 Please add FIXME comment at the problematic part(s).

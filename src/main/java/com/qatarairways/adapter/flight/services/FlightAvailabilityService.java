@@ -1,4 +1,7 @@
-package com.qatarairways.adapter.flight;
+package com.qatarairways.adapter.flight.services;
+
+import com.qatarairways.adapter.flight.views.FlightSummary;
+import com.qatarairways.adapter.flight.dto.request.FlightAvailabilityRequest;
 
 import java.util.Collection;
 
@@ -8,7 +11,8 @@ import java.util.Collection;
 public interface FlightAvailabilityService {
     /**
      * Returns all flights matching the request.
-     * The flights returned are the ones which are going from {@code origin} to {@code destination} on the date {@code departureDate}.
+     * The flights returned are the ones which are going from {@code origin} to {@code destination} on the date
+     * {@code departureDate}.
      * It is also ensured that the flight has at least {@code numberOfTravellers} seats available.
      *
      * @param request the availability request

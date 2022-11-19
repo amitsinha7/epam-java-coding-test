@@ -1,4 +1,4 @@
-package com.qatarairways.adapter.flight;
+package com.qatarairways.adapter.flight.views;
 
 import java.util.Date;
 
