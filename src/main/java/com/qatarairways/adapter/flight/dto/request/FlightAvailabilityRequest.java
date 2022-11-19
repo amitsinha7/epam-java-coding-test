@@ -1,7 +1,8 @@
-package com.qatarairways.adapter.flight;
+package com.qatarairways.adapter.flight.dto.request;
 
 import java.util.Date;
 
+import com.qatarairways.adapter.flight.dto.FlightDetails;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -14,19 +15,21 @@ public class FlightAvailabilityRequest {
      * The origin (departure) of the flights.
      */
     @NonNull
-    private final String origin;
+    String origin;
     /**
      * The target destination of the flights.
      */
     @NonNull
-    private final String destination;
+    String destination;
     /**
      * The day of departure.
      */
     @NonNull
-    private final Date departureDate;
+    Date departureDate;
     /**
      * The required number of seats.
      */
-    private final int numberOfTravellers;
+    int numberOfTravellers;
+
+    FlightDetails flightDetails;
 }
