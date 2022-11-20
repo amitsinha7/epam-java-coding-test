@@ -2,6 +2,7 @@ package com.qatarairways.adapter.flight.views;
 
 import java.util.Date;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
 
@@ -10,6 +11,7 @@ import lombok.Value;
  */
 @Value
 @Builder
+@AllArgsConstructor
 public class FlightSummary {
     /**
      * The airline code.

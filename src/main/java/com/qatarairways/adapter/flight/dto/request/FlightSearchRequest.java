@@ -36,4 +36,17 @@ public class FlightSearchRequest {
     private FlightSort flightSort = FlightSort.DURATION;
     @Builder.Default
     private String order = "ASC";
+
+    public FlightSearchRequest(@NonNull String origin, @NonNull String destination, @NonNull String departureDateTime) {
+        this.origin = origin;
+        this.destination = destination;
+        this.departureDateTime = departureDateTime;
+        this.numberOfTravellers = 1;
+        this.flightStatus = FlightStatus.NA;
+        this.page = 0;
+        this.size = 3;
+        this.flightSort = FlightSort.DURATION;
+        this.order = "ASC";
+        this.maxPriceInUsd = 0L;
+    }
 }
