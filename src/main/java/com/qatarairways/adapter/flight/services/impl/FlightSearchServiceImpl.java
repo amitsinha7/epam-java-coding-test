@@ -2,14 +2,16 @@ package com.qatarairways.adapter.flight.services.impl;
 
 import com.qatarairways.adapter.flight.dto.request.FlightAvailabilityRequest;
 import com.qatarairways.adapter.flight.dto.request.FlightSearchRequest;
-import com.qatarairways.adapter.flight.dto.response.FlightSearchDto;
-import com.qatarairways.adapter.flight.enums.FlightSort;
-import com.qatarairways.adapter.flight.enums.FlightStatus;
+import com.qatarairways.adapter.flight.dto.response.FlightSearchResponse;
+import com.qatarairways.adapter.flight.enums.SortBy;
 import com.qatarairways.adapter.flight.services.FlightAvailabilityService;
 import com.qatarairways.adapter.flight.services.FlightSearchService;
 import com.qatarairways.adapter.flight.views.FlightSummary;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FlightSearchServiceImpl implements FlightSearchService {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final FlightAvailabilityService flightAvailabilityService;
 
     public FlightSearchServiceImpl(FlightAvailabilityService flightAvailabilityService) {
@@ -34,33 +37,44 @@ public class FlightSearchServiceImpl implements FlightSearchService {
      * {@code departureDate}.
      * It is also ensured that the flight has at least {@code numberOfTravellers} seats available.
      *
-     * @param request  the search request
-     * @param pageable is for sorting and limiting the result set.
-     *                 As Page dependency is unavailable, Returning Collection
+     * @param request the search request
+     *                pageable is for sorting and limiting the result set.
+     *                As Page dependency is unavailable, Returning Collection
      * @return collection of matching flight details
      */
 
     @Override
-    public Collection<FlightSearchDto> fetchFlightsBasedOnRequest(FlightSearchRequest request) {
+    public Collection<FlightSearchResponse> fetchFlightsBasedOnRequest(FlightSearchRequest request) {
+
+        logger.debug("Inside fetchFlightsBasedOnRequest and request data as {}", request);
 
         Timestamp deptTimeStamp = new Timestamp(Long.parseLong(request.getDepartureDateTime()));
         Date deptDate = new Date(deptTimeStamp.getTime());
 
-        FlightAvailabilityRequest req = new FlightAvailabilityRequest(request.getOrigin(),
-                request.getDestination(), deptDate, request.getNumberOfTravellers());
+        FlightAvailabilityRequest req = new FlightAvailabilityRequest(request.getOrigin(), request.getDestination(),
+                deptDate, request.getNumberOfTravellers());
+
+        logger.debug("Calling flightAvailabilityService.getAvailableFlights and request send as {}", req);
 
         Collection<FlightSummary> flightSummaries = flightAvailabilityService.getAvailableFlights(req);
 
-        List<FlightSearchDto> flightSearchDtoList = new ArrayList<>();
+        List<FlightSearchResponse> flightSearchDtoList = new ArrayList<>();
 
         if (flightSummaries != null && !flightSummaries.isEmpty()) {
+
+            logger.debug("After calling flightAvailabilityService.getAvailableFlights and flightSummaries size as {}",
+                    flightSummaries.size());
+
             flightSummaries.forEach(flightSummary -> {
                 long dur = flightSummary.getArrivalTime().getTime() - flightSummary.getDepartureTime().getTime();
-                FlightSearchDto flightSearchDto = new FlightSearchDto(flightSummary.getAirlineCode(),
+
+                FlightSearchResponse flightSearchDto = new FlightSearchResponse(flightSummary.getAirlineCode(),
                         flightSummary.getDepartureTime(), flightSummary.getArrivalTime(),
                         flightSummary.getAveragePriceInUsd(), flightSummary.isCancellationPossible(), dur);
+
                 flightSearchDtoList.add(flightSearchDto);
             });
+
         }
 
         if (flightSearchDtoList.isEmpty()) {
@@ -70,15 +84,22 @@ public class FlightSearchServiceImpl implements FlightSearchService {
         }
     }
 
-    private Collection<FlightSearchDto> filterBasedFlightDetails(List<FlightSearchDto> flightSearchDtoList,
-                                                                 FlightSearchRequest request) {
+    private Collection<FlightSearchResponse> filterBasedFlightDetails(List<FlightSearchResponse> flightSearchDtoList,
+                                                                      FlightSearchRequest request) {
 
-        if (request.getFlightStatus() == FlightStatus.NA && request.getMaxPriceInUsd() == 0L
-                && request.getFlightSort() == FlightSort.DURATION && request.getOrder().equals("ASC")) {
-            return flightSearchDtoList.stream()
-                    .limit(request.getSize())
-                    .sorted(Comparator.comparing(FlightSearchDto::getDuration))
-                    .collect(Collectors.toList());
+        logger.debug("Inside filterBasedFlightDetails and flightSearchDtoList size as {}", flightSearchDtoList.size());
+
+        if (request.getSortBy() == SortBy.DURATION) {
+            if (request.getOrder() == SortOrder.ASCENDING) {
+                return flightSearchDtoList.stream()
+                        .limit(request.getSize())
+                        .sorted(Comparator.comparing(FlightSearchResponse::getDuration)).collect(Collectors.toList());
+            } else {
+                return flightSearchDtoList.stream()
+                        .limit(request.getSize())
+                        .sorted(Comparator.comparing(FlightSearchResponse::getDuration).reversed())
+                        .collect(Collectors.toList());
+            }
         }
 
         return Collections.emptyList();
