@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -58,7 +60,7 @@ public class FlightSearchServiceImpl implements FlightSearchService {
 
         Collection<FlightSummary> flightSummaries = flightAvailabilityService.getAvailableFlights(req);
 
-        List<FlightSearchResponse> flightSearchDtoList = new ArrayList<>();
+        List<FlightSearchResponse> searchResponses = new ArrayList<>();
 
         if (flightSummaries != null && !flightSummaries.isEmpty()) {
 
@@ -72,37 +74,72 @@ public class FlightSearchServiceImpl implements FlightSearchService {
                         flightSummary.getDepartureTime(), flightSummary.getArrivalTime(),
                         flightSummary.getAveragePriceInUsd(), flightSummary.isCancellationPossible(), dur);
 
-                flightSearchDtoList.add(flightSearchDto);
+                searchResponses.add(flightSearchDto);
             });
 
         }
 
-        if (flightSearchDtoList.isEmpty()) {
+        if (searchResponses.isEmpty()) {
             return Collections.emptyList();
         } else {
-            return filterBasedFlightDetails(flightSearchDtoList, request);
+            return filterBasedFlightDetails(searchResponses, request);
         }
     }
 
-    private Collection<FlightSearchResponse> filterBasedFlightDetails(List<FlightSearchResponse> flightSearchDtoList,
+    private Collection<FlightSearchResponse> filterBasedFlightDetails(List<FlightSearchResponse> searchResponses,
                                                                       FlightSearchRequest request) {
 
-        logger.debug("Inside filterBasedFlightDetails and flightSearchDtoList size as {}", flightSearchDtoList.size());
+        logger.debug("Inside filterBasedFlightDetails and flightSearchDtoList size as {}", searchResponses.size());
 
-        if (request.getSortBy() == SortBy.DURATION) {
-            if (request.getOrder() == SortOrder.ASCENDING) {
-                return flightSearchDtoList.stream()
-                        .limit(request.getSize())
-                        .sorted(Comparator.comparing(FlightSearchResponse::getDuration)).collect(Collectors.toList());
-            } else {
-                return flightSearchDtoList.stream()
-                        .limit(request.getSize())
-                        .sorted(Comparator.comparing(FlightSearchResponse::getDuration).reversed())
-                        .collect(Collectors.toList());
-            }
+        Predicate<FlightSearchResponse> predicates = getPredicatesForFlightSearchRequest(request);
+
+        Comparator<FlightSearchResponse> sorted =
+                getComparatorBasedOnSearchRequest(request.getOrder(), request.getSortBy());
+
+        if (sorted != null) {
+            searchResponses.sort(sorted);
+        }
+        if (predicates != null) {
+            return searchResponses.stream().limit(request.getSize()).filter(predicates).collect(Collectors.toList());
         }
 
-        return Collections.emptyList();
+        return searchResponses.stream()
+                .limit(request.getSize()).collect(Collectors.toList());
+
+    }
+
+    private Comparator<FlightSearchResponse> getComparatorBasedOnSearchRequest(SortOrder order, SortBy sortBy) {
+        //Default filter based on duration
+        Comparator<FlightSearchResponse> searchResponseComparator = Comparator.comparing(FlightSearchResponse::getDuration);
+        if (sortBy == SortBy.DURATION) {
+            if (order == SortOrder.DESCENDING) {
+                return Comparator.comparing(FlightSearchResponse::getDuration).reversed();
+            }
+        } else if (sortBy == SortBy.PRICE) {
+            if (order == SortOrder.ASCENDING) {
+                return Comparator.comparing(FlightSearchResponse::getAveragePriceInUsd);
+            } else if (order == SortOrder.DESCENDING) {
+                return Comparator.comparing(FlightSearchResponse::getAveragePriceInUsd).reversed();
+            }
+        }
+        return searchResponseComparator;
+    }
+
+    private Predicate<FlightSearchResponse> getPredicatesForFlightSearchRequest(FlightSearchRequest request) {
+
+        if (request.getFlightStatus() != null) {
+            return p -> p.isCancellationPossible() == request.getFlightStatus();
+        }
+
+        if (request.getMaxPriceInUsd() != null) {
+            Predicate<FlightSearchResponse> nonNullPredicate = Objects::nonNull;
+            Predicate<FlightSearchResponse> avgPricePredicate =
+                    p -> p.getAveragePriceInUsd() <= request.getMaxPriceInUsd();
+            return nonNullPredicate.and(avgPricePredicate);
+        }
+
+
+        return null;
     }
 
 }
