@@ -40,8 +40,8 @@ class FlightSearchServiceTests {
                 String.valueOf(Instant.now().toEpochMilli()),1,null, SortBy.DURATION,
                 0L,0,3, SortOrder.ASCENDING);
 
-        Collection<FlightSearchResponse> searchDtos = flightSearchService.fetchFlightsBasedOnRequest(request);
-        Assertions.assertEquals(searchDtos.size(), request.getSize());
+        Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
+        Assertions.assertEquals(searchResponses.size(), request.getSize());
     }
 
     private Collection<FlightSummary> getFlightSummariesRandom() {

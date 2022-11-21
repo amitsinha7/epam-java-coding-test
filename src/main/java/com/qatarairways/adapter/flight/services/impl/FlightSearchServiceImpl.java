@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -68,6 +67,7 @@ public class FlightSearchServiceImpl implements FlightSearchService {
                     flightSummaries.size());
 
             flightSummaries.forEach(flightSummary -> {
+
                 long dur = flightSummary.getArrivalTime().getTime() - flightSummary.getDepartureTime().getTime();
 
                 FlightSearchResponse flightSearchDto = new FlightSearchResponse(flightSummary.getAirlineCode(),
@@ -91,26 +91,23 @@ public class FlightSearchServiceImpl implements FlightSearchService {
 
         logger.debug("Inside filterBasedFlightDetails and flightSearchDtoList size as {}", searchResponses.size());
 
+        //Default predicate just checking departure time is greater than today's
         Predicate<FlightSearchResponse> predicates = getPredicatesForFlightSearchRequest(request);
 
+        //Default filter based on duration, It can't be null
         Comparator<FlightSearchResponse> sorted =
                 getComparatorBasedOnSearchRequest(request.getOrder(), request.getSortBy());
 
-        if (sorted != null) {
-            searchResponses.sort(sorted);
-        }
-        if (predicates != null) {
-            return searchResponses.stream().limit(request.getSize()).filter(predicates).collect(Collectors.toList());
-        }
-
         return searchResponses.stream()
-                .limit(request.getSize()).collect(Collectors.toList());
-
+                .limit(request.getSize())
+                .sorted(sorted)
+                .filter(predicates).collect(Collectors.toList());
     }
 
     private Comparator<FlightSearchResponse> getComparatorBasedOnSearchRequest(SortOrder order, SortBy sortBy) {
-        //Default filter based on duration
-        Comparator<FlightSearchResponse> searchResponseComparator = Comparator.comparing(FlightSearchResponse::getDuration);
+        //Default filter based on departure time
+        Comparator<FlightSearchResponse> searchResponseComparator =
+                Comparator.comparing(FlightSearchResponse::getDepartureTime);
         if (sortBy == SortBy.DURATION) {
             if (order == SortOrder.DESCENDING) {
                 return Comparator.comparing(FlightSearchResponse::getDuration).reversed();
@@ -131,15 +128,11 @@ public class FlightSearchServiceImpl implements FlightSearchService {
             return p -> p.isCancellationPossible() == request.getFlightStatus();
         }
 
-        if (request.getMaxPriceInUsd() != null) {
-            Predicate<FlightSearchResponse> nonNullPredicate = Objects::nonNull;
-            Predicate<FlightSearchResponse> avgPricePredicate =
-                    p -> p.getAveragePriceInUsd() <= request.getMaxPriceInUsd();
-            return nonNullPredicate.and(avgPricePredicate);
+        if (request.getMaxPriceInUsd() > 0) {
+            return p -> p.getAveragePriceInUsd() <= request.getMaxPriceInUsd();
         }
 
-
-        return null;
+        return p -> p.getDepartureTime().compareTo(new Date()) >= 0;
     }
 
 }
