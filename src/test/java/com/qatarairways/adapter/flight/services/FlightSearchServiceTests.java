@@ -37,8 +37,75 @@ class FlightSearchServiceTests {
     void fetchFlightsBasedOnRequestDefault() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
+                String.valueOf(Instant.now().toEpochMilli()),1,null, null,
+                0L,0,5, SortOrder.UNSORTED);
+
+        Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
+        Assertions.assertEquals(searchResponses.size(), request.getSize());
+    }
+
+    @Test
+    void fetchFlightsFilterByTimeTakenDesc() {
+
+        FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
                 String.valueOf(Instant.now().toEpochMilli()),1,null, SortBy.DURATION,
-                0L,0,3, SortOrder.ASCENDING);
+                0L,0,5, SortOrder.DESCENDING);
+
+        Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
+        Assertions.assertEquals(searchResponses.size(), request.getSize());
+    }
+
+    @Test
+    void fetchFlightsFilterByTimeTakenAsc() {
+
+        FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
+                String.valueOf(Instant.now().toEpochMilli()),1,null, SortBy.DURATION,
+                0L,0,4, SortOrder.ASCENDING);
+
+        Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
+        searchResponses.forEach(System.out::println);
+        Assertions.assertEquals(searchResponses.size(), request.getSize());
+    }
+
+    @Test
+    void fetchFlightsFilterByDurationDescAndConfirmFlight() {
+
+        FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
+                String.valueOf(Instant.now().toEpochMilli()),1,false, SortBy.DURATION,
+                0L,0,24, SortOrder.DESCENDING);
+
+        Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
+        Assertions.assertEquals(searchResponses.size(), request.getSize());
+    }
+
+    @Test
+    void fetchFlightsFilterByDurationDescAndPossibleCancellationFlight() {
+
+        FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
+                String.valueOf(Instant.now().toEpochMilli()),3,true, SortBy.DURATION,
+                0L,0,5, SortOrder.DESCENDING);
+
+        Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
+        Assertions.assertEquals(searchResponses.size(), request.getSize());
+    }
+
+    @Test
+    void fetchFlightsByAvgPriceAndDescAndConfirmFlight() {
+
+        FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
+                String.valueOf(Instant.now().toEpochMilli()),1,false, SortBy.PRICE,
+                2070L,0,5, SortOrder.DESCENDING);
+
+        Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
+        Assertions.assertEquals(searchResponses.size(), request.getSize());
+    }
+
+    @Test
+    void fetchFlightsFilterByAvgPriceAscAndPossibleCancellationFlight() {
+
+        FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
+                String.valueOf(Instant.now().toEpochMilli()),3,true, SortBy.DURATION,
+                5000L,0,5, SortOrder.ASCENDING);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
         Assertions.assertEquals(searchResponses.size(), request.getSize());
@@ -49,7 +116,7 @@ class FlightSearchServiceTests {
         long min = 10;
         float avgPrice = 1000;
         boolean isCancellationPossible = false;
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 8000; i++) {
             LocalDateTime dateTime = LocalDateTime.now().plus(Duration.of(min, ChronoUnit.MINUTES));
             Date arrTime = Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
             FlightSummary summary = new FlightSummary(airlineCode, deptTime, arrTime, avgPrice, isCancellationPossible);

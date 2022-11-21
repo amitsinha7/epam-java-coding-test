@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -99,20 +100,43 @@ public class FlightSearchServiceImpl implements FlightSearchService {
         Comparator<FlightSearchResponse> sorted =
                 getComparatorBasedOnSearchRequest(request.getOrder(), request.getSortBy());
 
-        return searchResponses.stream()
-                .limit(request.getSize())
-                .sorted(sorted)
+        Collection<FlightSearchResponse> filteredAndSortedResponses = searchResponses.stream()
                 .filter(predicates)
+                .sorted(sorted)
                 .collect(Collectors.toList());
+
+        logger.debug("Inside filterBasedFlightDetails and filteredAndSortedResponses size as {}",
+                filteredAndSortedResponses.size());
+
+        Collection<FlightSearchResponse> responses = new ArrayList<>();
+
+        AtomicInteger count = new AtomicInteger();
+
+        if (filteredAndSortedResponses.size()<= request.getSize()) {
+            return filteredAndSortedResponses;
+        } else {
+            filteredAndSortedResponses.forEach(flightSearchResponse -> {
+                if (count.get() < request.getSize()) {
+                    responses.add(flightSearchResponse);
+                    count.getAndIncrement();
+                }
+            });
+        }
+
+        return responses;
     }
 
     private Comparator<FlightSearchResponse> getComparatorBasedOnSearchRequest(SortOrder order, SortBy sortBy) {
+
         //Default filter based on departure time
         Comparator<FlightSearchResponse> searchResponseComparator =
                 Comparator.comparing(FlightSearchResponse::getDepartureTime);
+
         if (sortBy == SortBy.DURATION) {
             if (order == SortOrder.DESCENDING) {
                 return Comparator.comparing(FlightSearchResponse::getDuration).reversed();
+            } else if (order == SortOrder.ASCENDING) {
+                return Comparator.comparing(FlightSearchResponse::getDuration);
             }
         } else if (sortBy == SortBy.PRICE) {
             if (order == SortOrder.ASCENDING) {
@@ -121,23 +145,24 @@ public class FlightSearchServiceImpl implements FlightSearchService {
                 return Comparator.comparing(FlightSearchResponse::getAveragePriceInUsd).reversed();
             }
         }
+
         return searchResponseComparator;
     }
 
     private Predicate<FlightSearchResponse> getPredicatesForFlightSearchRequest(FlightSearchRequest request) {
 
-        if (request.getFlightStatus() != null) {
-            return p -> p.isCancellationPossible() == request.getFlightStatus();
+        if (request.getIsCancellationPossible() != null) {
+            return p -> p.isCancellationPossible() == request.getIsCancellationPossible();
         }
 
-        if (request.getMaxPriceInUsd() > 0) {
-            return p -> p.getAveragePriceInUsd() <= request.getMaxPriceInUsd();
+        if (request.getMaxPrice() > 0) {
+            return p -> p.getAveragePriceInUsd() <= request.getMaxPrice();
         }
 
         java.util.Calendar c = java.util.Calendar.getInstance();
         c.setTime(new Date());
         c.add(Calendar.YEAR, -1);
-        return p -> p.getDepartureTime().compareTo(c.getTime()) >=0 ;
+        return p -> p.getDepartureTime().compareTo(c.getTime()) >= 0;
     }
 
 }

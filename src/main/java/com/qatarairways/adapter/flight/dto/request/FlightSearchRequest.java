@@ -18,9 +18,9 @@ public class FlightSearchRequest {
     @NonNull
     private String departureDateTime;
     private int numberOfTravellers;
-    private Boolean flightStatus;
+    private Boolean isCancellationPossible;
     private SortBy sortBy;
-    private Long maxPriceInUsd;
+    private Long maxPrice;
     @Builder.Default
     private int page = 0;
     @Builder.Default
