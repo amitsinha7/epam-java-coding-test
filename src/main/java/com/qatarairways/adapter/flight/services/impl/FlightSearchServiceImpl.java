@@ -4,6 +4,7 @@ import com.qatarairways.adapter.flight.dto.request.FlightAvailabilityRequest;
 import com.qatarairways.adapter.flight.dto.request.FlightSearchRequest;
 import com.qatarairways.adapter.flight.dto.response.FlightSearchResponse;
 import com.qatarairways.adapter.flight.enums.SortBy;
+import com.qatarairways.adapter.flight.exceptions.InvalidInputException;
 import com.qatarairways.adapter.flight.services.FlightAvailabilityService;
 import com.qatarairways.adapter.flight.services.FlightSearchService;
 import com.qatarairways.adapter.flight.views.FlightSummary;
@@ -51,6 +52,8 @@ public class FlightSearchServiceImpl implements FlightSearchService {
 
         logger.debug("Inside fetchFlightsBasedOnRequest and request data as {}", request);
 
+        validateSearchRequest(request);
+
         Timestamp deptTimeStamp = new Timestamp(Long.parseLong(request.getDepartureDateTime()));
         Date deptDate = new Date(deptTimeStamp.getTime());
 
@@ -88,6 +91,12 @@ public class FlightSearchServiceImpl implements FlightSearchService {
         }
     }
 
+    private void validateSearchRequest(FlightSearchRequest request) {
+        if (request == null) {
+            throw new InvalidInputException("flight search can't we null");
+        }
+    }
+
     private Collection<FlightSearchResponse> filterBasedFlightDetails(List<FlightSearchResponse> searchResponses,
                                                                       FlightSearchRequest request) {
 
@@ -112,7 +121,7 @@ public class FlightSearchServiceImpl implements FlightSearchService {
 
         AtomicInteger count = new AtomicInteger();
 
-        if (filteredAndSortedResponses.size()<= request.getSize()) {
+        if (filteredAndSortedResponses.size() <= request.getSize()) {
             return filteredAndSortedResponses;
         } else {
             filteredAndSortedResponses.forEach(flightSearchResponse -> {

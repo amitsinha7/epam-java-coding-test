@@ -3,9 +3,9 @@ package com.qatarairways.adapter.flight.services;
 import com.qatarairways.adapter.flight.dto.request.FlightSearchRequest;
 import com.qatarairways.adapter.flight.dto.response.FlightSearchResponse;
 import com.qatarairways.adapter.flight.enums.SortBy;
+import com.qatarairways.adapter.flight.exceptions.InvalidInputException;
 import com.qatarairways.adapter.flight.services.impl.FlightSearchServiceImpl;
 import com.qatarairways.adapter.flight.views.FlightSummary;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FlightSearchServiceTests {
     private final static String airlineCode = "QATAR";
@@ -37,78 +40,86 @@ class FlightSearchServiceTests {
     void fetchFlightsBasedOnRequestDefault() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
-                String.valueOf(Instant.now().toEpochMilli()),1,null, null,
-                0L,0,5, SortOrder.UNSORTED);
+                String.valueOf(Instant.now().toEpochMilli()), 1, null, null,
+                0L, 0, 5, SortOrder.UNSORTED);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
-        Assertions.assertEquals(searchResponses.size(), request.getSize());
+        assertEquals(searchResponses.size(), request.getSize());
     }
 
     @Test
     void fetchFlightsFilterByTimeTakenDesc() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
-                String.valueOf(Instant.now().toEpochMilli()),1,null, SortBy.DURATION,
-                0L,0,5, SortOrder.DESCENDING);
+                String.valueOf(Instant.now().toEpochMilli()), 1, null, SortBy.DURATION,
+                0L, 0, 5, SortOrder.DESCENDING);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
-        Assertions.assertEquals(searchResponses.size(), request.getSize());
+        assertEquals(searchResponses.size(), request.getSize());
     }
 
     @Test
     void fetchFlightsFilterByTimeTakenAsc() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
-                String.valueOf(Instant.now().toEpochMilli()),1,null, SortBy.DURATION,
-                0L,0,4, SortOrder.ASCENDING);
+                String.valueOf(Instant.now().toEpochMilli()), 1, null, SortBy.DURATION,
+                0L, 0, 4, SortOrder.ASCENDING);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
         searchResponses.forEach(System.out::println);
-        Assertions.assertEquals(searchResponses.size(), request.getSize());
+        assertEquals(searchResponses.size(), request.getSize());
     }
 
     @Test
     void fetchFlightsFilterByDurationDescAndConfirmFlight() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
-                String.valueOf(Instant.now().toEpochMilli()),1,false, SortBy.DURATION,
-                0L,0,24, SortOrder.DESCENDING);
+                String.valueOf(Instant.now().toEpochMilli()), 1, false, SortBy.DURATION,
+                0L, 0, 24, SortOrder.DESCENDING);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
-        Assertions.assertEquals(searchResponses.size(), request.getSize());
+        assertEquals(searchResponses.size(), request.getSize());
     }
 
     @Test
     void fetchFlightsFilterByDurationDescAndPossibleCancellationFlight() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
-                String.valueOf(Instant.now().toEpochMilli()),3,true, SortBy.DURATION,
-                0L,0,5, SortOrder.DESCENDING);
+                String.valueOf(Instant.now().toEpochMilli()), 3, true, SortBy.DURATION,
+                0L, 0, 5, SortOrder.DESCENDING);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
-        Assertions.assertEquals(searchResponses.size(), request.getSize());
+        assertEquals(searchResponses.size(), request.getSize());
     }
 
     @Test
     void fetchFlightsByAvgPriceAndDescAndConfirmFlight() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
-                String.valueOf(Instant.now().toEpochMilli()),1,false, SortBy.PRICE,
-                2070L,0,5, SortOrder.DESCENDING);
+                String.valueOf(Instant.now().toEpochMilli()), 1, false, SortBy.PRICE,
+                2070L, 0, 5, SortOrder.DESCENDING);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
-        Assertions.assertEquals(searchResponses.size(), request.getSize());
+        assertEquals(searchResponses.size(), request.getSize());
     }
 
     @Test
     void fetchFlightsFilterByAvgPriceAscAndPossibleCancellationFlight() {
 
         FlightSearchRequest request = new FlightSearchRequest("DOHA", "CPH",
-                String.valueOf(Instant.now().toEpochMilli()),3,true, SortBy.DURATION,
-                5000L,0,5, SortOrder.ASCENDING);
+                String.valueOf(Instant.now().toEpochMilli()), 3, true, SortBy.DURATION,
+                5000L, 0, 5, SortOrder.ASCENDING);
 
         Collection<FlightSearchResponse> searchResponses = flightSearchService.fetchFlightsBasedOnRequest(request);
-        Assertions.assertEquals(searchResponses.size(), request.getSize());
+        assertEquals(searchResponses.size(), request.getSize());
+    }
+
+    @Test
+    void fetchFlightSearchRequestInvalidInputException() {
+        InvalidInputException invalidInputException = assertThrows(InvalidInputException.class,
+                () -> flightSearchService.fetchFlightsBasedOnRequest(null));
+
+        assertEquals("flight search can't we null", invalidInputException.getMessage());
     }
 
     private Collection<FlightSummary> getFlightSummariesRandom() {
@@ -122,11 +133,11 @@ class FlightSearchServiceTests {
             FlightSummary summary = new FlightSummary(airlineCode, deptTime, arrTime, avgPrice, isCancellationPossible);
             summaryCollections.add(summary);
             min = min + 10;
-            avgPrice = avgPrice+5;
-            if(isCancellationPossible){
+            avgPrice = avgPrice + 5;
+            if (isCancellationPossible) {
                 isCancellationPossible = false;
-                avgPrice =avgPrice -6;
-                min = min-11;
+                avgPrice = avgPrice - 6;
+                min = min - 11;
             } else {
                 isCancellationPossible = true;
             }
