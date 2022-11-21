@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -91,17 +92,18 @@ public class FlightSearchServiceImpl implements FlightSearchService {
 
         logger.debug("Inside filterBasedFlightDetails and flightSearchDtoList size as {}", searchResponses.size());
 
-        //Default predicate just checking departure time is greater than today's
+        //Default predicate just checking departure time lies within a year
         Predicate<FlightSearchResponse> predicates = getPredicatesForFlightSearchRequest(request);
 
-        //Default filter based on duration, It can't be null
+        //Default filter based on duration
         Comparator<FlightSearchResponse> sorted =
                 getComparatorBasedOnSearchRequest(request.getOrder(), request.getSortBy());
 
         return searchResponses.stream()
                 .limit(request.getSize())
                 .sorted(sorted)
-                .filter(predicates).collect(Collectors.toList());
+                .filter(predicates)
+                .collect(Collectors.toList());
     }
 
     private Comparator<FlightSearchResponse> getComparatorBasedOnSearchRequest(SortOrder order, SortBy sortBy) {
@@ -132,7 +134,10 @@ public class FlightSearchServiceImpl implements FlightSearchService {
             return p -> p.getAveragePriceInUsd() <= request.getMaxPriceInUsd();
         }
 
-        return p -> p.getDepartureTime().compareTo(new Date()) >= 0;
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.setTime(new Date());
+        c.add(Calendar.YEAR, -1);
+        return p -> p.getDepartureTime().compareTo(c.getTime()) >=0 ;
     }
 
 }
